@@ -21,7 +21,7 @@ public class JwtUtil {
                 .setSubject(username)
                 .claim("authorities", collection.stream().map(GrantedAuthority::getAuthority).toList())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 )) // 10 hours
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 )) 
                 .signWith(SignatureAlgorithm.HS256, jwtSecret) // Use the secure key
                 .compact();
     }
