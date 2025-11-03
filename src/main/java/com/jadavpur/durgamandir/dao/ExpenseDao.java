@@ -13,5 +13,6 @@ public interface ExpenseDao  {
 	ResponseEntity<ExpenseDto> addExpense(Expense expense);
 	List<Expense> findByMonth(int month);
 	List<Expense> getAllExpense();
+	void addMultipleExpenses(List<Expense> expenses);
 
 }

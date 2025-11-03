@@ -34,7 +34,6 @@ public class ExpenseDaoImp implements ExpenseDao {
 		expenseDto.setExpenseType(expense.getExpenseType());
 		expenseDto.setExpenseItem(expense.getExpenseItem());
 		expenseDto.setPurchaseDate(expense.getPurchaseDate());
-
 		return ResponseEntity.ok(expenseDto);
 	} 
 	
@@ -49,7 +48,12 @@ public class ExpenseDaoImp implements ExpenseDao {
 	public List<Expense> getAllExpense() {
 		return entityManager.createQuery("SELECT e FROM Expense e", Expense.class).getResultList();
 	}
-
 	
+	@Override
+	public void addMultipleExpenses(List<Expense> expenses) {
+		for (Expense expense : expenses) {
+			entityManager.persist(expense);
+		}
+	}
 
 }
