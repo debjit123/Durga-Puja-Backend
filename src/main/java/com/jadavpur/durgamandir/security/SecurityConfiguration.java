@@ -25,7 +25,7 @@ public class SecurityConfiguration {
         public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
             http.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authorize -> authorize
-                    .requestMatchers(HttpMethod.POST, "/login", "/signup").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/login", "/signup", "/forgot-password", "/reset-password").permitAll()
                     .requestMatchers("/expense/add-expense").hasRole("ADMIN")
                     .anyRequest().authenticated() // All other endpoints require authentication
                 )

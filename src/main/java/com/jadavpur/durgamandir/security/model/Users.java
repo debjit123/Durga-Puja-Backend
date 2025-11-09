@@ -18,6 +18,7 @@ public class Users {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int userId;
 	private String username;
+	private String email;
 	private String password;
 
 	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
@@ -28,10 +29,11 @@ public class Users {
 
 	}
 
-	public Users(int userId, String username, String password) {
+	public Users(int userId, String username, String password, String email) {
 		this.userId = userId;
 		this.username = username;
 		this.password = password;
+		this.email = email;
 	}
 
 	public int getUserId() {
@@ -44,6 +46,14 @@ public class Users {
 
 	public String getPassword() {
 		return password;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
 	}
 
 	public void setUserId(int userId) {

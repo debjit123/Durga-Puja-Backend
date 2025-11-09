@@ -1,83 +1,86 @@
 package com.jadavpur.durgamandir.controler;
 
 import java.util.Map;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.jadavpur.durgamandir.dto.AuthRequest;
-import com.jadavpur.durgamandir.security.model.Authority;
-import com.jadavpur.durgamandir.security.model.Users;
-import com.jadavpur.durgamandir.security.repo.UserRepo;
+import com.jadavpur.durgamandir.dto.ForgotPasswordRequest;
 import com.jadavpur.durgamandir.security.util.JwtUtil;
+import com.jadavpur.durgamandir.service.AuthService;
 
 @RestController
 public class AuthController {
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
+	@Autowired
+	private AuthenticationManager authenticationManager;
 
-    @Autowired
-    private JwtUtil jwtUtil;
-    
-    @Autowired
-    private UserRepo userRepo;
+	@Autowired
+	private JwtUtil jwtUtil;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+	@Autowired
+	AuthService authService;
 
-    @PostMapping("/login")
-    public ResponseEntity<Map<String, String>> login(@RequestBody AuthRequest authRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword())
-        );
+	@PostMapping("/login")
+	public ResponseEntity<Map<String, String>> login(@RequestBody AuthRequest authRequest) {
+		Authentication authentication = authenticationManager.authenticate(
+				new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword()));
 
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        String jwt = jwtUtil.generateToken(userDetails.getUsername(), userDetails.getAuthorities());
-        return ResponseEntity.ok(Map.of("token", jwt));
-    }
-    
-    @PostMapping("/signup")
-    public ResponseEntity<String> signup(@RequestBody AuthRequest authRequest) {
-        // Basic validation
-        if (authRequest.getUsername() == null || authRequest.getUsername().isBlank() ||
-            authRequest.getPassword() == null || authRequest.getPassword().isBlank()) {
-            return ResponseEntity.badRequest().body("Username and password must be provided");
-        }
+		UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+		String jwt = jwtUtil.generateToken(userDetails.getUsername(), userDetails.getAuthorities());
+		return ResponseEntity.ok(Map.of("token", jwt));
+	}
 
-        // Check if user already exists
-        if (userRepo.findByUsername(authRequest.getUsername()).isPresent()) {
-            return ResponseEntity.status(409).body("User already exists");
-        }
+	@PostMapping("/signup")
+	public ResponseEntity<String> signup(@RequestBody AuthRequest authRequest) {
+		if (authRequest.getUsername() == null || authRequest.getUsername().isBlank()
+				|| authRequest.getPassword() == null || authRequest.getPassword().isBlank()) {
+			return ResponseEntity.badRequest().body("Username and password must be provided");
+		}
 
-        // Encode password and create user with ROLE_USER
-        String encoded = passwordEncoder.encode(authRequest.getPassword());
-        Users user = new Users();
-        user.setUsername(authRequest.getUsername());
-        user.setPassword(encoded);
+		String resultMessage = authService.signup(authRequest.getUsername(), authRequest.getEmail(), authRequest.getPassword());
 
-        Authority auth = new Authority();
-        auth.setUsername(authRequest.getUsername());
-        auth.setAuthority("ROLE_USER");
+		if (resultMessage.equals("User registered successfully")) {
+			return ResponseEntity.ok(resultMessage);
+		} else {
+			return ResponseEntity.badRequest().body(resultMessage);
+		}
 
-        Set<Authority> auths = new HashSet<>();
-        auths.add(auth);
-        user.setAuthorities(auths);
+	}
+	
+	@PostMapping("/forgot-password")
+	public ResponseEntity<String> forgetPassword(@RequestBody ForgotPasswordRequest  forgotPasswordRequest ) {
+		
+		String resultMessage = authService.sendPasswordResetLink(forgotPasswordRequest.getEmail());
 
-        userRepo.save(user);
+		if (resultMessage.equals("Password reset link sent successfully. Check your email for the for link and change the password.")) {
+			return ResponseEntity.ok(resultMessage);
+		} else {
+			return ResponseEntity.badRequest().body(resultMessage);
+		}
+	}
+	
+	@PostMapping("/reset-password")
+	public ResponseEntity<String> resetPassword(@RequestBody Map<String, String> request) {
+		String token = request.get("token");
+		String newPassword = request.get("newPassword");
 
-        return ResponseEntity.ok("User registered successfully");
-    }
-    
-    
+		if (token == null || token.isBlank() || newPassword == null || newPassword.isBlank()) {
+			return ResponseEntity.badRequest().body("Token and new password must be provided");
+		}
+
+		String resultMessage = authService.resetPassword(token, newPassword);
+
+		if (resultMessage.equals("Password has been reset successfully.")) {
+			return ResponseEntity.ok(resultMessage);
+		} else {
+			return ResponseEntity.badRequest().body(resultMessage);
+		}
+	}
 }
