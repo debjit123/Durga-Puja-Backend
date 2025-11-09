@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Spring Boot Local Config (DO NOT COMMIT) ###
+src/main/resources/application-local.properties
